@@ -19,7 +19,7 @@ dp = Dispatcher()
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
-    await message.answer(f'Привет!, {html.bold(message.from_user.full_name)}!')
+    await message.answer(f'Привет!, {html.bold(message.from_user.full_name)}!\nЭто бот автосалон!\nЗдесь ты можешь посмотреть машины и их характерстики!')
 
 async def main() -> None:
     bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
