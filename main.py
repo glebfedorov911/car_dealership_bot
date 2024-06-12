@@ -4,13 +4,7 @@ import os
 import sys
 
 from dotenv import load_dotenv
-from aiogram import Bot, Dispatcher, html, F
-from aiogram.types import Message, FSInputFile, KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup, CallbackQuery
-from aiogram.client.default import DefaultBotProperties
-from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
-
-import db
+from card import *
 
 load_dotenv()
 
@@ -21,36 +15,11 @@ page = 0
 page_model = 0
 pages = {1:[0, 2], 2:[2, 4], 3:[4, 6], 4:[6, 8]}
 owner = 0
-
-def create_button_auto(data: list, page: int, call: str) -> InlineKeyboardMarkup:
-    kb = []
-    for car in data[pages[page][0]:pages[page][1]]:  
-        if call == 'model':
-            brand = car[-1]
-            model = car[1]
-        else:
-            brand = car[0]
-            model = -1
-
-        kb.append([InlineKeyboardButton(text=str(car[1]), callback_data=f'{call}_._{brand}_{model}')])
-
-    if page == 1:
-        kb.append([InlineKeyboardButton(text='>>>', callback_data=f'{call}_next')])
-    elif page > 1 and page < max(pages.keys()):
-        kb.append([InlineKeyboardButton(text='>>>', callback_data=f'{call}_next')])
-        kb.append([InlineKeyboardButton(text='<<<', callback_data=f'{call}_previous')])
-    else:
-        kb.append([InlineKeyboardButton(text='<<<', callback_data=f'{call}_previous')])
-
-    keyboard = InlineKeyboardMarkup(inline_keyboard=kb)
-    return keyboard
-
+auto = 0
+model = 0
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
-    global page, page_model
-    page_model = 0
-    page = 0
     kb = [
         [KeyboardButton(text='Посмотреть автомобили🚗')]
     ]
@@ -61,83 +30,147 @@ async def command_start_handler(message: Message) -> None:
 
 @dp.message()
 async def check_auto(message: Message) -> None:
-    global page, page_model
-    
     if message.text == 'Посмотреть автомобили🚗':
-        page = 1
-        page_model = 1
-        auto = db.select_data(name_table='car', data=['*'], where=False)
+        global auto
+        query_auto = db.select_data(name_table='car', data=['*'], where=False)
+        auto = Card(brand=-1, model=-1, call="car", query=query_auto)
+        await message.answer('Выберите автомобиль для просмотра', reply_markup=auto.show())
 
-        keyboard = create_button_auto(auto, page, 'car')
-
-        await message.answer('Выбери автомобили, который хочешь посмотреть!', reply_markup=keyboard) 
-
-    if message.text == 'Домой🏠':
-        page = 0
-        page_model = 0
-        kb = [
-            [KeyboardButton(text='Посмотреть автомобили🚗')]
-        ]
-        keyboard = ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=False)
-        await message.answer(f'Ты снова хочешь посмотреть авто?', reply_markup=keyboard)
-    
 @dp.callback_query(F.data.startswith('car_') | F.data.startswith('model_'))
 async def answer_to_callback_car(query: CallbackQuery) -> None:
-    global page, page_model, owner
+    global auto, model
     action = query.data.split('_')
-    auto = db.select_data(name_table='car', data=['*'], where=False)
 
-    try:    
-        if action[1] == 'next' and action[0] == 'car':
-            #след. страница с фирмами
-            page += 1
+    try:
+        if action[1] == 'next':
+            if action[0] == 'car':
+                await query.message.edit_reply_markup(reply_markup=auto.next())
+            else:
+                await query.message.edit_reply_markup(reply_markup=model.next())
 
-            keyboard = create_button_auto(auto, page, 'car')
-            
-            await query.message.edit_reply_markup(reply_markup=keyboard)
+        if action[1] == 'previous':
+            if action[0] == 'car':
+                await query.message.edit_reply_markup(reply_markup=auto.previous())
+            else:
+                await query.message.edit_reply_markup(reply_markup=model.previous())
 
-        elif action[1] == 'previous' and action[0] == 'car':
-            #пред. страница с фирмами
-            page -= 1
+        if action[1] == 'stay':
+            if action[-1] == '-1':
+                query_model = db.select_data(name_table='specifications', data=['*'], relate='', where=True, where_data={'brand_id':action[2]})
+                model = Card(brand=action[2], model=-1, call='model', query=query_model)
+                await query.message.answer('Выберите модель автомобиля', reply_markup=model.show())
+            else:
+                query_model = db.select_data(name_table='specifications', data=['*'], relate='AND', where=True, where_data={'brand_id':action[2], 'model':action[3]})
+                show_caption_model = model.show_caption_model(query_model)
+                await query.message.answer_photo(photo=FSInputFile(f'media/{show_caption_model[1]}', filename='car'), caption=show_caption_model[0])
 
-            keyboard = create_button_auto(auto, page, 'car')
-
-            await query.message.edit_reply_markup(reply_markup=keyboard)
-        elif action[1] == 'next' and action[0] == 'model':
-            #след. страница с модельками
-            model = db.select_data(name_table='specifications', data=['*'], where=True, relate='OR', where_data={'brand_id':owner})    
-            page_model += 1
-
-            keyboard = create_button_auto(model, page_model, 'model')
-            
-            await query.message.edit_reply_markup(reply_markup=keyboard)
-        elif action[1] == 'previous' and action[0] == 'model':
-            #пред. страница с модельками
-            model = db.select_data(name_table='specifications', data=['*'], where=True, relate='OR', where_data={'brand_id':owner})    
-            page_model -= 1
-
-            keyboard = create_button_auto(model, page_model, 'model')
-
-            await query.message.edit_reply_markup(reply_markup=keyboard)
-        elif action[1] == '.' and action[0] == 'model':
-            #отображение инфы о модели
-            data = db.select_data(name_table='specifications', data=['*'], where=True, relate='OR', where_data={'model':action[-1]})[0]
-            kb = [[KeyboardButton(text='Домой🏠')]]
-            keyboard = ReplyKeyboardMarkup(keyboard=kb)
-            
-            await query.message.answer_photo(photo= FSInputFile(f'media/{data[-2]}', filename='1'), caption=f'{data[1]}, {data[2]}, {data[3]}, {data[4]}, {data[6]}', reply_markup=keyboard)
-            
-        else:
-            #cоздание показа моделей авто
-            owner = action[2]
-            model = db.select_data(name_table='specifications', data=['*'], where=True, relate='OR', where_data={'brand_id':owner})
-            keyboard = create_button_auto(model, page_model, 'model')
-            await query.message.answer('Выберите модель автомобиля', reply_markup=keyboard)
     except:
-        await query.message.answer('Ошибка😔 Попробуйте снова!!', reply_markup=keyboard)
-
+        await query.message.answer('К сожалению, что-то пошло не так😔\nПопробуйте снова (нажмите на кнопку "Посмотреть автомобили🚗")')
 
     await query.answer()
+
+# def create_button_auto(data: list, page: int, call: str) -> InlineKeyboardMarkup:
+#     kb = []
+#     for car in data[pages[page][0]:pages[page][1]]:  
+#         if call == 'model':
+#             brand = car[-1]
+#             model = car[1]
+#         else:
+#             brand = car[0]
+#             model = -1
+
+#         kb.append([InlineKeyboardButton(text=str(car[1]), callback_data=f'{call}_._{brand}_{model}')])
+
+#     if page == 1:
+#         kb.append([InlineKeyboardButton(text='>>>', callback_data=f'{call}_next')])
+#     elif page > 1 and page < max(pages.keys()):
+#         kb.append([InlineKeyboardButton(text='>>>', callback_data=f'{call}_next')])
+#         kb.append([InlineKeyboardButton(text='<<<', callback_data=f'{call}_previous')])
+#     else:
+#         kb.append([InlineKeyboardButton(text='<<<', callback_data=f'{call}_previous')])
+
+#     keyboard = InlineKeyboardMarkup(inline_keyboard=kb)
+#     return keyboard
+
+# @dp.message()
+# async def check_auto(message: Message) -> None:
+#     global page, page_model
+    
+#     if message.text == 'Посмотреть автомобили🚗':
+#         page = 1
+#         page_model = 1
+#         auto = db.select_data(name_table='car', data=['*'], where=False)
+
+#         keyboard = create_button_auto(auto, page, 'car')
+
+#         await message.answer('Выбери автомобили, который хочешь посмотреть!', reply_markup=keyboard) 
+
+#     if message.text == 'Домой🏠':
+#         page = 0
+#         page_model = 0
+#         kb = [
+#             [KeyboardButton(text='Посмотреть автомобили🚗')]
+#         ]
+#         keyboard = ReplyKeyboardMarkup(keyboard=kb, resize_keyboard=False)
+#         await message.answer(f'Ты снова хочешь посмотреть авто?', reply_markup=keyboard)
+    
+# @dp.callback_query(F.data.startswith('car_') | F.data.startswith('model_'))
+# async def answer_to_callback_car(query: CallbackQuery) -> None:
+#     global page, page_model, owner
+#     action = query.data.split('_')
+#     auto = db.select_data(name_table='car', data=['*'], where=False)
+
+#     try:    
+#         if action[1] == 'next' and action[0] == 'car':
+#             #след. страница с фирмами
+#             page += 1
+
+#             keyboard = create_button_auto(auto, page, 'car')
+            
+#             await query.message.edit_reply_markup(reply_markup=keyboard)
+
+#         elif action[1] == 'previous' and action[0] == 'car':
+#             #пред. страница с фирмами
+#             page -= 1
+
+#             keyboard = create_button_auto(auto, page, 'car')
+
+#             await query.message.edit_reply_markup(reply_markup=keyboard)
+#         elif action[1] == 'next' and action[0] == 'model':
+#             #след. страница с модельками
+#             model = db.select_data(name_table='specifications', data=['*'], where=True, relate='OR', where_data={'brand_id':owner})    
+#             page_model += 1
+
+#             keyboard = create_button_auto(model, page_model, 'model')
+            
+#             await query.message.edit_reply_markup(reply_markup=keyboard)
+#         elif action[1] == 'previous' and action[0] == 'model':
+#             #пред. страница с модельками
+#             model = db.select_data(name_table='specifications', data=['*'], where=True, relate='OR', where_data={'brand_id':owner})    
+#             page_model -= 1
+
+#             keyboard = create_button_auto(model, page_model, 'model')
+
+#             await query.message.edit_reply_markup(reply_markup=keyboard)
+#         elif action[1] == '.' and action[0] == 'model':
+#             #отображение инфы о модели
+#             data = db.select_data(name_table='specifications', data=['*'], where=True, relate='OR', where_data={'model':action[-1]})[0]
+#             kb = [[KeyboardButton(text='Домой🏠')]]
+#             keyboard = ReplyKeyboardMarkup(keyboard=kb)
+            
+#             await query.message.answer_photo(photo= FSInputFile(f'media/{data[-2]}', filename='1'), caption=f'{data[1]}, {data[2]}, {data[3]}, {data[4]}, {data[6]}', reply_markup=keyboard)
+            
+#         else:
+#             #cоздание показа моделей авто
+#             owner = action[2]
+#             model = db.select_data(name_table='specifications', data=['*'], where=True, relate='OR', where_data={'brand_id':owner})
+#             keyboard = create_button_auto(model, page_model, 'model')
+#             await query.message.answer('Выберите модель автомобиля', reply_markup=keyboard)
+#     except:
+#         await query.message.answer('Ошибка😔 Попробуйте снова!!', reply_markup=keyboard)
+
+
+#     await query.answer()
 
 
 async def main() -> None:
