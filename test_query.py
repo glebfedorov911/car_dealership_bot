@@ -1,0 +1,66 @@
+import db
+
+car = {
+    'name_table': 'car', 
+    'column_table': [
+    'brand_id INTEGER PRIMARY KEY AUTOINCREMENT',
+    'owner VARCHAR(50) NOT NULL',
+    'brand VARCHAR(50) NOT NULL',
+    'img VARCHAR(100) NOT NULL'
+]}
+
+specifications = {
+    'name_table': 'specifications',
+    'column_table': [
+        'specifications_id INTEGER PRIMARY KEY AUTOINCREMENT',
+        'model VARCHAR(50) NOT NULL',
+        'type_of_body VARCHAR(30) NOT NULL',
+        'count_of_place INTEGER NOT NULL',
+        'type_of_engine VARCHAR(30) NOT NULL',
+        'img VARCHAR(100) NOT NULL',
+        'brand_id INT NOT NULL',
+        'FOREIGN KEY (brand_id) REFERENCES car (brand_id)'
+    ]
+}
+
+first_select = {
+    'name_table':'car', 
+    'data':['*'], 
+    'relate':'OR', 
+    'where_data':{'brand_id': 1, 'owner': 'FORD CO'}, 
+    'where':True
+}
+
+first_insert = {
+    'name_table':'car',
+    'values_data': {'owner':'FORD CO', 'brand':'FORD'}
+}
+
+first_delete = {
+    'name_table':'car',
+    'where':True,
+    'relate':'OR',
+    'where_data':{'brand_id':4, "owner":'dasds'}
+}
+
+drop_car = {
+    'name_table':'car'
+}
+
+drop_specifications = {
+    'name_table':'specifications'
+}
+
+replace_first = {
+    'name_table': 'car',
+    'values_data':{'brand_id': "1", 'owner':'FORD11 CO', 'brand':'FORD11'},
+}
+
+# create_table(**specifications)
+# create_table(**car)
+# select_data(**first_select)
+# insert_data(**first_insert)
+# delete_data(**first_delete)
+# drop_table(**drop_car)
+# drop_table(**drop_specifications)
+# replace_data(**replace_first)
