@@ -1,4 +1,5 @@
-import db
+from db import *
+
 
 car = {
     'name_table': 'car', 
@@ -26,9 +27,10 @@ specifications = {
 first_select = {
     'name_table':'car', 
     'data':['*'], 
-    'relate':'OR', 
-    'where_data':{'brand_id': 1, 'owner': 'FORD CO'}, 
-    'where':True
+    # 'relate':'OR', 
+    # 'where_data':{'brand_id': 1, 'owner': 'FORD CO'}, 
+    # 'where':True
+    "where":False
 }
 
 first_insert = {
@@ -40,7 +42,7 @@ first_delete = {
     'name_table':'car',
     'where':True,
     'relate':'OR',
-    'where_data':{'brand_id':4, "owner":'dasds'}
+    'where_data':{'brand_id':4}
 }
 
 drop_car = {
@@ -58,7 +60,7 @@ replace_first = {
 
 # create_table(**specifications)
 # create_table(**car)
-# select_data(**first_select)
+# print(select_data(**first_select))
 # insert_data(**first_insert)
 # delete_data(**first_delete)
 # drop_table(**drop_car)

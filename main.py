@@ -6,6 +6,7 @@ import sys
 from dotenv import load_dotenv
 from card import *
 
+
 load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
@@ -31,7 +32,7 @@ async def another_message(message: Message) -> None:
     if message.text == 'Посмотреть автомобили🚗':
         global auto
         query_auto = db.select_data(name_table='car', data=['*'], where=False)
-        auto = CardAuto(brand=-1, model=-1, call="car", query=query_auto)
+        auto = CardAuto(brand=-1, call="car", query=query_auto)
         await message.answer('Выберите автомобиль для просмотра', reply_markup=auto.show())
 
 @dp.callback_query(F.data.startswith('car_') | F.data.startswith('model_'))

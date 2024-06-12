@@ -1,6 +1,7 @@
 import sqlite3
 from typing import List
 
+
 conn = sqlite3.connect('car_dealership.db')
 cur = conn.cursor()
 
