@@ -4,14 +4,14 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
 
-from typing import List, Tuple, Optional, Union
+from typing import List, Tuple
 
 import db
 
 
 class CardAuto:
     '''КЛАСС СОЗДАНИЯ КАРТЫ АВТОМОБИЛЕЙ'''
-    def __init__(self, brand:int, call:str, query:Union[Tuple, List], **kwargs):
+    def __init__(self, brand:int, call:str, query:Tuple | List, **kwargs):
         super().__init__(**kwargs)
         self.query = query
         self.brand = brand

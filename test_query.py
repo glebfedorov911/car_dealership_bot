@@ -24,13 +24,24 @@ specifications = {
     ]
 }
 
+user = {
+    'name_table': 'user',
+    'column_table': [
+        'user_id INTEGER PRIMARY KEY AUTOINCREMENT',
+        'username VARCHAR(100) UNIQUE NOT NULL',
+        'password VARCHAR(100) NOT NULL',
+        'is_admin BOOLEAN NOT NULL',
+        'email VARCHAR(100) UNIQUE NOT NULL'
+    ]
+}
+
 first_select = {
     'name_table':'car', 
     'data':['*'], 
-    # 'relate':'OR', 
-    # 'where_data':{'brand_id': 1, 'owner': 'FORD CO'}, 
-    # 'where':True
-    "where":False
+    'relate':'OR', 
+    'where_data':{'brand_id': 1}, 
+    'where':True
+    # "where":False
 }
 
 first_insert = {
@@ -53,6 +64,10 @@ drop_specifications = {
     'name_table':'specifications'
 }
 
+drop_user = {
+    'name_table':'user'
+}
+
 replace_first = {
     'name_table': 'car',
     'values_data':{'brand_id': "1", 'owner':'FORD11 CO', 'brand':'FORD11'},
@@ -66,3 +81,5 @@ replace_first = {
 # drop_table(**drop_car)
 # drop_table(**drop_specifications)
 # replace_data(**replace_first)
+# create_table(**user)
+# drop_table(**drop_user)

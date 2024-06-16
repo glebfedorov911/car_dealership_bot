@@ -16,8 +16,9 @@ def create_table(*args, **kwargs) -> None:
         column_in_table = kwargs['column_table']
         space = ((', '.join(('%s',) * len(column_in_table))))
         cur.execute(f'CREATE TABLE IF NOT EXISTS {name_table} ({space});' % (*column_in_table, ))
-    except:
+    except sqlite3.Error as e:
         print('WRONG!!! ERROR CREATE!!!')
+        print(e)
     
 def drop_table(*args, **kwargs):
     '''Функция сносит таблицу, название которой вы укажите в словаре (name_table: str)
@@ -28,8 +29,9 @@ def drop_table(*args, **kwargs):
     try: 
         conn.execute(f'DROP TABLE {name_table};')
     
-    except:
+    except sqlite3.Error as e:
         print('WRONG!!! ERROR DROP!!!')
+        print(e)
 
 def select_data(*args, **kwargs) -> List | int:
     '''Функция запроса, есть два режима, получить все данные или определенные (нанести ограничения)
@@ -47,8 +49,9 @@ def select_data(*args, **kwargs) -> List | int:
             result = conn.execute(f'SELECT {data} FROM {name_table} WHERE {where_body};' % (*where_data, ))
         else:
             result = conn.execute(f'SELECT {data} FROM {name_table};')
-    except:
+    except sqlite3.Error as e:
         print('ERROR!!! WRONG SELECT!!!')
+        print(e)
                 
 
     return result.fetchall() if result != [] else 0
@@ -64,8 +67,9 @@ def insert_data(*args, **kwargs) -> None:
     try:
         conn.execute(f'INSERT INTO {name_table}({values_name}) VALUES ({values_body});' % (*values_data, ))
         conn.commit()
-    except:
+    except sqlite3.Error as e:
         print('ERROR!!! WRONG INSERT!!!')
+        print(e)
 
 def delete_data(*args, **kwargs):
     '''Функция удаления с двумя режимами: все данные или только определенные'''
@@ -82,8 +86,9 @@ def delete_data(*args, **kwargs):
         else:
             conn.execute(f'DELETE FROM {name_table};')
             conn.commit()
-    except:
+    except sqlite3.Error as e:
         print('ERROR!!! WRONG DELETE!!!')
+        print(e)
 
 def replace_data(*args, **kwargs):
     '''Функция замены уже существующих данных'''
@@ -92,5 +97,9 @@ def replace_data(*args, **kwargs):
     values_name = ', '.join([i for i in kwargs['values_data'].keys()])
     values_data = ['"' + i + '"' for i in kwargs['values_data'].values()]
 
-    conn.execute(f'REPLACE INTO {name_table}({values_name}) VALUES ({values_body})' % (*values_data, ))
-    conn.commit()
+    try:
+        conn.execute(f'REPLACE INTO {name_table}({values_name}) VALUES ({values_body})' % (*values_data, ))
+        conn.commit()
+    except sqlite3.Error as e:
+        print('ERROR!!! WRONG REPLACE!!!')
+        print(e)
