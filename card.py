@@ -60,7 +60,7 @@ class CardAuto:
 
 class CardModel(CardAuto):
     '''КЛАСС СОЗДАНИЯ КАРТЫ МОДЕЛЕЙ'''
-    def __init__(self, model:int, **kwargs):
+    def __init__(self, model:int | None, **kwargs):
         super().__init__(**kwargs)
         self.model = model
 

@@ -39,3 +39,18 @@ class Admin(Person):
     '''В разработке'''
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+    
+    def delete_user_account(self, username: str) -> bool:
+        pass
+
+    def set_admin_user(self, username: str) -> bool:
+        pass
+
+    def unset_admin_user(self, username: str) -> bool:
+        pass
+
+    def new_auto(self, owner: str, brand: str, img: str) -> None:
+        pass
+
+    def delete_auto(self, brand_id: int) -> None:
+        pass
