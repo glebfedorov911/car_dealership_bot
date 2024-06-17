@@ -128,7 +128,6 @@ class Admin(Person):
         data = ["specifications_id, model, type_of_body, count_of_place, type_of_engine, img, brand_id"]
 
         for inf in db.select_data(**select):
-            print(inf)
             data.append(f'{inf[0]}, {inf[1]}, {inf[2]}, {inf[3]}, {inf[4]}, {inf[5]}, {inf[6]}')
 
         return '\n'.join(data)

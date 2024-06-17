@@ -17,6 +17,7 @@ model = 0
 users = 0
 person = 0
 who_use_func = 0
+img = ''
 login = False
 is_admin = False
 
@@ -31,8 +32,9 @@ def create_keyboard_button(*args):
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
     '''Фунция старта, добавляет кнопку'''
-    global is_admin, login, person
+    global is_admin, login, person, img
 
+    img = ''
     if login:
         if is_admin:
             keyboard = create_keyboard_button('Посмотреть автомобили🚗', 'Выйти👋', 'Админ Панель')  
@@ -45,9 +47,19 @@ async def command_start_handler(message: Message) -> None:
     \nЗдесь ты можешь посмотреть машины и их характеристики!', reply_markup=keyboard)
 
 @dp.message()
-async def another_message(message: Message) -> None:
+async def another_message(message: Message, bot: Bot) -> None:
     '''Функция обработки сообщений, отображает все марки автомобилей, регистирует и авторизовывает пользователя'''
-    global login, auto, is_admin, users, person 
+    global login, auto, is_admin, users, person, img
+
+    if message.photo and (img == '' or not message.caption or '#photo' not in message.caption):
+        await message.answer('К сожалению, я не понимаю что это')
+        return 
+
+    if message.photo and '#photo' in message.caption and img != '':
+        await bot.download(message.photo[-1], destination=f'media/{img}')
+        await message.answer('Успешно сохранено')
+        return
+
     if message.text == 'Посмотреть автомобили🚗':
         if login:
             query_auto = db.select_data(name_table='car', data=['*'], where=False)
@@ -63,6 +75,10 @@ async def another_message(message: Message) -> None:
     if '#регистрация' in message.text:
         if not login:
             data = message.text.split('\n')
+            if len(data) < 4:
+                await message.answer('Вы забыли что-то ввести!')
+                return
+
             person = Person()
             select = {
                 'name_table':'user', 
@@ -94,29 +110,44 @@ async def another_message(message: Message) -> None:
     if '#авторизация' in message.text:
         if not login:
             data = message.text.split('\n')
+            username = ''
+            email = ''
+
+            if len(data) <= 3:
+                data.append('')
+                where_data = {'username': data[1], 'email': data[3]}
+            if '@' in data[1]:
+                where_data = {'email': data[1]}
+                email = data[1]
+            else:
+                where_data = {'username': data[1], 'email': data[3]}
+                username = data[1]
+                email = data[3]
+
             select = {
                 'name_table':'user', 
                 'data':['is_admin'], 
                 'relate':'OR', 
-                'where_data':{'username': data[1], 'email': data[3]}, 
+                'where_data':where_data, 
                 'where':True
             }
-                
-            is_admin = bool(db.select_data(**select)[0][0])
 
+            is_admin = db.select_data(**select)[0][0] == 'True'
+            
             try:
                 if is_admin:
                     person = Admin()
                 else:
                     person = Person()
+                    is_admin = False
 
-                if person.login(password=data[2], email=data[3], username=data[1]):
+                if person.login(password=data[2], email=email, username=username):
                     login = True
 
                     if is_admin:
                         keyboard = create_keyboard_button('Посмотреть автомобили🚗', 'Выйти👋', 'Админ Панель')
                         await message.answer('Для добавления нового автомобиля напишите характеристики с тэгом #добавитьавто owner brand img\nдля удаления автомобиля #удалитьавто brand_id\nдля просмотра всех существующих автомобилей с brand_id напишите #покажиавто', reply_markup=keyboard)
-                        await message.answer('Для добавления нового модели напишите характеристики с тэгом #добавитьмодель owner brand img\nдля удаления моделей #удалитьмодель brand_id\nдля просмотра всех существующих моделей с brand_id напишите #покажимодели', reply_markup=keyboard)
+                        await message.answer('Для добавления нового модели напишите характеристики с тэгом #добавитьмодель model type_of_body count_of_place type_of_engine img brand_id\nдля удаления моделей #удалитьмодель specifications_id\nдля просмотра всех существующих моделей с brand_id напишите #покажимодели', reply_markup=keyboard)
                         await message.answer('!!! Не забывайте про перенос между параметрами !!!', reply_markup=keyboard)
                     else:
                         keyboard = create_keyboard_button('Посмотреть автомобили🚗', 'Выйти👋')
@@ -154,7 +185,8 @@ async def another_message(message: Message) -> None:
             try:
                 data = message.text.split('\n')
                 person.new_auto(owner=data[1], brand=data[2], img=data[3])
-                await message.answer('Автомобиль добавлен!')
+                img = data[3]
+                await message.answer('Автомобиль добавлен! Скиньте фотографию!\nНе забудьте про тэг #photo')
             except:
                 await message.answer('Ошибка')
     
@@ -179,7 +211,8 @@ async def another_message(message: Message) -> None:
             try:
                 data = message.text.split('\n')
                 person.new_model(model=data[1], type_of_body=data[2], count_of_place=data[3], type_of_engine=data[4], img=data[5], brand_id=data[6])
-                await message.answer('Модель добавлена!')
+                img = data[5]
+                await message.answer('Модель добавлена! Скиньте фотографию!\nНе забудьте про тэг #photo')
             except:
                 await message.answer('Ошибка')
     
@@ -198,7 +231,6 @@ async def another_message(message: Message) -> None:
                 await message.answer('Модель удалена!')
             except:
                 await message.answer('Ошибка')
-
 
 @dp.callback_query(F.data.startswith('admin_'))
 async def answer_to_callback_admin(query: CallbackQuery) -> None:
