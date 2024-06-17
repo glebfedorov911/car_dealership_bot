@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 from card import *
 from user import *
 
+
 load_dotenv()
 
 TOKEN = os.getenv('TOKEN')
