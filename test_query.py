@@ -73,6 +73,12 @@ replace_first = {
     'values_data':{'brand_id': "1", 'owner':'FORD11 CO', 'brand':'FORD11'},
 }
 
+update = {
+    'name_table': 'user',
+    'values_data': {'is_admin':'True'},
+    'where_body': {'user_id':'2'}
+}
+
 # create_table(**specifications)
 # create_table(**car)
 # print(select_data(**first_select))
@@ -83,3 +89,4 @@ replace_first = {
 # replace_data(**replace_first)
 # create_table(**user)
 # drop_table(**drop_user)
+# update_data(**update)

@@ -103,3 +103,18 @@ def replace_data(*args, **kwargs):
     except sqlite3.Error as e:
         print('ERROR!!! WRONG REPLACE!!!')
         print(e)
+
+def update_data(*args, **kwargs):
+    '''Обновление существующих данных'''
+    name_table = kwargs['name_table']
+    values_body = ', '.join([i+"=%s" for i in kwargs['values_data'].keys()])
+    values_data = ['"' + i + '"' for i in kwargs['values_data'].values()]
+    where_body = ', '.join([i+"=%s" for i in kwargs['where_body'].keys()])
+    where_data = ['"' + i + '"' for i in kwargs['where_body'].values()]
+
+    try:
+        conn.execute(f'UPDATE {name_table} SET {values_body} WHERE ({where_body})' % (*values_data, *where_data))
+        conn.commit()
+    except sqlite3.Error as e:
+        print('ERROR!!! WRONG REPLACE!!!')
+        print(e)
