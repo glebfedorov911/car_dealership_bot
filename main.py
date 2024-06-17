@@ -151,35 +151,53 @@ async def another_message(message: Message) -> None:
     
     if '#добавитьавто' in message.text:
         if is_admin:
-            data = message.text.split('\n')
-            person.new_auto(owner=data[1], brand=data[2], img=data[3])
-            await message.answer('Автомобиль добавлен!')
+            try:
+                data = message.text.split('\n')
+                person.new_auto(owner=data[1], brand=data[2], img=data[3])
+                await message.answer('Автомобиль добавлен!')
+            except:
+                await message.answer('Ошибка')
     
     if '#покажиавто' in message.text:
         if is_admin:
-            await message.answer(str(person.show_auto()))
+            try:
+                await message.answer(str(person.show_auto()))
+            except:
+                await message.answer('Ошибка')
 
     if '#удалитьавто' in message.text:
         if is_admin:
-            data = message.text.split('\n')
-            person.delete_auto(brand_id=data[1])
-            await message.answer('Автомобиль удален!')
+            try:
+                data = message.text.split('\n')
+                person.delete_auto(brand_id=data[1])
+                await message.answer('Автомобиль удален!')
+            except:
+                await message.answer('Ошибка')
 
     if '#добавитьмодель' in message.text:
         if is_admin:
-            data = message.text.split('\n')
-            person.new_model(model=data[1], type_of_body=data[2], count_of_place=data[3], type_of_engine=data[4], img=data[5], brand_id=data[6])
-            await message.answer('Модель добавлена!')
+            try:
+                data = message.text.split('\n')
+                person.new_model(model=data[1], type_of_body=data[2], count_of_place=data[3], type_of_engine=data[4], img=data[5], brand_id=data[6])
+                await message.answer('Модель добавлена!')
+            except:
+                await message.answer('Ошибка')
     
     if '#покажимодели' in message.text:
         if is_admin:
-            await message.answer(str(person.show_model()))
+            try:
+                await message.answer(str(person.show_model()))
+            except:
+                await message.answer('Ошибка')
     
     if '#удалитьмодель' in message.text:
         if is_admin:
-            data = message.text.split('\n')
-            person.delete_model(specifications_id=data[1])
-            await message.answer('Модель удалена!')
+            try:
+                data = message.text.split('\n')
+                person.delete_model(specifications_id=data[1])
+                await message.answer('Модель удалена!')
+            except:
+                await message.answer('Ошибка')
 
 
 @dp.callback_query(F.data.startswith('admin_'))
