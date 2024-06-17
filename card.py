@@ -8,6 +8,7 @@ from typing import List, Tuple
 
 import db
 
+
 class Card:
     '''КЛАСС РОДИТЕЛЬ ДЛЯ ВСЕХ КАРТ'''
     def __init__(self, call:str, query:Tuple | List, **kwargs):
