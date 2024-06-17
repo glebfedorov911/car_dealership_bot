@@ -1,6 +1,5 @@
 import db
 import hashlib
-from typing import List, Tuple
 
 
 class Person:
@@ -37,7 +36,7 @@ class Person:
         return hashlib.md5(password.encode('UTF-8')).hexdigest()
 
 class Admin(Person):
-    '''В разработке'''
+    '''КЛАСС АДМИНИСТРАТОРА'''
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
     
