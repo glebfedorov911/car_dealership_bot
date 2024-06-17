@@ -17,6 +17,7 @@ auto = 0
 model = 0
 users = 0
 person = 0
+username = 0
 who_use_func = 0
 img = ''
 login = False
@@ -50,7 +51,7 @@ async def command_start_handler(message: Message) -> None:
 @dp.message()
 async def another_message(message: Message, bot: Bot) -> None:
     '''Функция обработки сообщений, отображает все марки автомобилей, регистирует и авторизовывает пользователя'''
-    global login, auto, is_admin, users, person, img
+    global login, auto, is_admin, users, person, img, username
 
     if message.photo and (img == '' or not message.caption or '#photo' not in message.caption):
         await message.answer('К сожалению, я не понимаю что это')
@@ -88,11 +89,13 @@ async def another_message(message: Message, bot: Bot) -> None:
                 'where_data':{'username': data[1], 'email': data[3]}, 
                 'where':True
             }
+            username = data[1]
 
             username_email = db.select_data(**select)
             try:
                 if username_email != []:
                     await message.answer('Данное имя или email уже заняты!\nПопробуйте снова (нажмите на кнопку "Зарегистрироваться✍️" или введите "/start")')
+                    return
                 else:
                     login = True
                     person.signup(username=data[1], password=data[2], email=data[3])
@@ -124,6 +127,8 @@ async def another_message(message: Message, bot: Bot) -> None:
                 where_data = {'username': data[1], 'email': data[3]}
                 username = data[1]
                 email = data[3]
+            
+            username = data[1]
 
             select = {
                 'name_table':'user', 
@@ -237,8 +242,8 @@ async def another_message(message: Message, bot: Bot) -> None:
                 await message.answer('Ошибка')
 
 @dp.callback_query(F.data.startswith('admin_'))
-async def answer_to_callback_admin(query: CallbackQuery) -> None:
-    global is_admin, person, users, who_use_func
+async def answer_to_callback_admin(query: CallbackQuery, bot: Bot) -> None:
+    global is_admin, person, users, who_use_func, username, login
     if is_admin:
 
         action = query.data.split('_')
@@ -260,17 +265,43 @@ async def answer_to_callback_admin(query: CallbackQuery) -> None:
 
 
         if action[1] == 'Назначить админом':
-            person.set_admin_user(who_use_func)
-            await query.message.answer('Пользователь назначен администратором\nдля продолжения введите /start или нажмите Админ Панель')
+            is_admin_user_use_func = db.select_data(name_table='user', data=['is_admin'], where=True, relate='OR', where_data={'username':who_use_func})
+
+            if is_admin_user_use_func[0][0] == 'False':
+                person.set_admin_user(who_use_func)
+                await query.message.delete()
+                await query.message.answer('Пользователь назначен администратором\nдля продолжения введите /start или нажмите Админ Панель')
+            else:
+                await query.message.delete()
+                await query.message.answer('Пользователь является администратором\nдля продолжения введите /start или нажмите Админ Панель')
+
         if action[1] == 'Снять с админки':
-            person.unset_admin_user(who_use_func)
-            await query.message.answer('Пользователь снят с поста администратора\nдля продолжения введите /start или нажмите Админ Панель')
+            is_admin_user_use_func = db.select_data(name_table='user', data=['is_admin'], where=True, relate='OR', where_data={'username':who_use_func})
+
+            if is_admin_user_use_func[0][0] == 'True':
+                person.unset_admin_user(who_use_func)
+                await query.message.delete()
+                await query.message.answer('Пользователь снят с поста администратора\nдля продолжения введите /start или нажмите Админ Панель')
+            else:
+                await query.message.delete()
+                await query.message.answer('Пользователь не является администратором\nдля продолжения введите /start или нажмите Админ Панель') 
+
         if action[1] == 'Удалить пользователя':
             person.delete_user_account(who_use_func)
+            del_msg = False
+
+            if who_use_func == username:
+                login = False
+                is_admin = False
+                del_msg = True
+                await query.message.delete()
+                await query.message.answer('Вы успешно вышли из аккаунта!')
 
             query_admin = db.select_data(name_table='user', data=['*'], where=False)
             users = CardUser(call='admin', query=query_admin)
 
+            if not del_msg:
+                await query.message.delete()
             await query.message.edit_reply_markup(reply_markup=users.show())
             await query.message.answer('Пользователь успешно удален\nдля продолжения введите /start или нажмите Админ Панель')
 

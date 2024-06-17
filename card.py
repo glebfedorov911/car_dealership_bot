@@ -56,7 +56,7 @@ class Card:
         kb = []
 
         for data in self.query[self.pages[self.page][0]:self.pages[self.page][1]]:
-            kb.append([InlineKeyboardButton(text=str(data[1]), callback_data=f'{self.call}_stay')])
+            kb.append([InlineKeyboardButton(text=str(data[1]).encode('utf-8'), callback_data=f'{self.call}_stay')])
 
         return kb
 
@@ -88,7 +88,7 @@ class CardAuto(Card):
         for data in self.query[self.pages[self.page][0]:self.pages[self.page][1]]:
             self.brand = data[0]
 
-            kb.append([InlineKeyboardButton(text=str(data[1]), callback_data=f'{self.call}_stay_{self.brand}_-1')])
+            kb.append([InlineKeyboardButton(text=str(data[1]).encode('utf-8'), callback_data=f'{self.call}_stay_{self.brand}_-1')])
 
         return kb
 
@@ -110,7 +110,7 @@ class CardModel(CardAuto):
             self.brand = data[-1]
             self.model = data[1]
 
-            kb.append([InlineKeyboardButton(text=str(data[1]), callback_data=f'{self.call}_stay_{self.brand}_{self.model}')])
+            kb.append([InlineKeyboardButton(text=str(data[1]).encode('utf-8'), callback_data=f'{self.call}_stay_{self.brand}_{self.model}')])
 
         return kb
 
@@ -131,6 +131,6 @@ class CardUser(Card):
         kb = []
 
         for data in self.query[self.pages[self.page][0]:self.pages[self.page][1]]:
-            kb.append([InlineKeyboardButton(text=str(data[1]), callback_data=f'{self.call}_stay_{str(data[1])}')])
+            kb.append([InlineKeyboardButton(text=str(data[1]).encode('utf-8'), callback_data=f'{self.call}_stay_{str(data[1])}')])
 
         return kb
