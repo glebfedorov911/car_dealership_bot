@@ -1,6 +1,5 @@
 import db
 import hashlib
-from typing import List, Tuple
 
 
 class Person:
