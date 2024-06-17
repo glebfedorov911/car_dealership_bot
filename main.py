@@ -133,7 +133,10 @@ async def another_message(message: Message, bot: Bot) -> None:
                 'where':True
             }
 
-            is_admin = db.select_data(**select)[0][0] == 'True'
+            if db.select_data(**select) == []:
+                is_admin = False
+            else:
+                is_admin = db.select_data(**select)[0][0] == 'True'
             
             try:
                 if is_admin:
